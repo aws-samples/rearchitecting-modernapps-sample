@@ -1,0 +1,25 @@
+services:
+  docrdr:
+    build: .
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+      - cache
+    environment:
+      CATALINA_OPTS: -Dorg.apache.tomcat.util.digester.PROPERTY_SOURCE=org.apache.tomcat.util.digester.EnvironmentPropertySource
+      DATABASE_HOST: database
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: adminadmin
+      CACHE_HOST: cache
+      CACHE_PORT: "6379"
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-info}
+  database:
+    image: public.ecr.aws/docker/library/mysql:8.0.29
+    environment:
+      MYSQL_ROOT_PASSWORD: adminadmin
+      MYSQL_DATABASE: docrdr
+    volumes:
+      - ./src/main/resources/data:/docker-entrypoint-initdb.d
+  cache:
+    image: public.ecr.aws/docker/library/redis:6.2

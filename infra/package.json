@@ -1,0 +1,29 @@
+{
+  "name": "docrdr-app",
+  "version": "0.1.0",
+  "bin": {
+    "docrdr-app": "bin/docrdr-app.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/jest": "^28.1.6",
+    "@types/node": "18.6.4",
+    "@types/prettier": "2.7.0",
+    "aws-cdk": "2.35.0",
+    "jest": "^28.1.3",
+    "ts-jest": "^28.0.7",
+    "ts-node": "^10.9.1",
+    "typescript": "~4.7.4"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.35.0",
+    "cdk-nag": "^2.18.4",
+    "constructs": "^10.1.70",
+    "source-map-support": "^0.5.21"
+  }
+}

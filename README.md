@@ -1,17 +1,4 @@
-## My Project
+# Sample Application for "Re-Architecting for Containerized Modern Application Workshop"
 
-TODO: Fill this README out!
-
-Be sure to:
-
-* Change the title in this README
-* Edit your repository description on GitHub
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
+See also [the workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/a49e50ba-7473-4348-ba5d-6166385ad91d)
 

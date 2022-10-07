@@ -1,0 +1,75 @@
+plugins {
+    id 'war'
+    id 'org.gretty' version '4.0.2'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+ext {
+    gretty_runTask = true
+    gretty_debugTask = true
+}
+
+configurations {
+    tomcat {
+        transitive = false
+    }
+}
+
+dependencies {
+
+    // This dependency is used by the application.
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:5.0.0'
+    compileOnly 'jakarta.annotation:jakarta.annotation-api:2.1.0'
+
+    runtimeOnly 'org.apache.tomcat:tomcat-dbcp:10.0.21'
+    runtimeOnly 'mysql:mysql-connector-java:8.0.29'
+
+    implementation 'org.jsoup:jsoup:1.15.1'
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.0'
+
+    implementation platform('software.amazon.awssdk:bom:2.17.216')
+    implementation 'software.amazon.awssdk:translate:2.17.216'
+
+    // Logging
+    runtimeOnly 'org.apache.logging.log4j:log4j-api:2.18.0'
+    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.18.0'
+    runtimeOnly 'org.apache.logging.log4j:log4j-jakarta-web:2.18.0'
+
+    // Logging - AWS SDK for Java
+    runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl:2.18.0'
+
+    // Use JUnit Jupiter for testing.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+
+    tomcat 'org.redisson:redisson-all:3.17.5'
+    tomcat 'org.redisson:redisson-tomcat-10:3.17.5'
+}
+
+war {
+    archiveName = 'docrdr.war'
+}
+
+gretty {
+    httpPort = 8081
+    contextPath = '/'
+    servletContainer = 'tomcat10'
+    jvmArgs = ["-Dlog4j2.configurationFile=${projectDir}/src/main/webapp/WEB-INF/log4j2.xml"]
+    enableNaming = true
+}
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
+
+task tomcatLibs(type: Copy) {
+    from (configurations.tomcat) {
+        include "*.jar"
+    }
+    into "${rootProject.rootDir.absolutePath}/build/libs"
+}

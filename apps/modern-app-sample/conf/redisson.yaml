@@ -1,0 +1,3 @@
+---
+singleServerConfig:
+  address: redis://${CACHE_HOST}:${CACHE_PORT}
