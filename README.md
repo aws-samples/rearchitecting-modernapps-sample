@@ -1,5 +1,13 @@
 # Sample Application for "Re-Architecting for Containerized Modern Application Workshop"
 
+It's the sample application to demonstrate how to modernize legacy applications.
+
+The sample uses:
+
+* Java
+* Jakarta Servlet
+* Tomcat
+
 ## Inspect the legacy app
 
 Check the legacy app and run it:
