@@ -19,6 +19,10 @@
 		{
 			"name": "Workshop Materials",
 			"path": "workshop"
+		},
+		{
+			"name": "Project Root",
+			"path": "."
 		}
 	],
 	"settings": {
