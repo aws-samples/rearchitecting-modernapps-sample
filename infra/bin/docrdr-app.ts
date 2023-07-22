@@ -20,4 +20,4 @@ const baseStack = new DocrdrAppStack(app, 'DocrdrAppStack');
 new DocrdrAppModernDbStack(app, 'DocrdrAppModernDbStack', baseStack.databaseHostname, {});
 new DocrdrAppModernCacheStack(app, 'DocrdrAppModernCacheStack', baseStack.vpc, {});
 
-cdk.Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true }))
+cdk.Aspects.of(app).add(new AwsSolutionsChecks())

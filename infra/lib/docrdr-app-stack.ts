@@ -72,6 +72,16 @@ export class DocrdrAppStack extends Stack {
       securityGroup,
       keyName,
       role,
+      blockDevices: [
+        {
+          deviceName: '/dev/xvda',
+          volume: ec2.BlockDeviceVolume.ebs(16, {
+            encrypted: true,
+            volumeType: ec2.EbsDeviceVolumeType.GP3,
+            deleteOnTermination: true,
+          }),
+        }
+      ], 
     });
 
     const lb = new elbv2.ApplicationLoadBalancer(this, 'LB', {
@@ -109,13 +119,12 @@ export class DocrdrAppStack extends Stack {
       engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_02_0 }),
       credentials: rds.Credentials.fromPassword(databaseUsername, SecretValue.unsafePlainText(databasePassword)),
       storageEncrypted: true,
-      instances: 1,
-      instanceProps: {
+      writer: rds.ClusterInstance.provisioned('writer', {
         instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM),
-        vpcSubnets: {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-        },
-        vpc,
+      }),
+      vpc,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
       parameters: {
         character_set_client: 'utf8mb4',
@@ -144,58 +153,54 @@ export class DocrdrAppStack extends Stack {
     });
 
     // NAG
-    NagSuppressions.addResourceSuppressions(securityGroup, [
-      {
-        id: 'AwsSolutions-EC23',
-        reason: 'For workshops we only publish LB port to the world'
-      },
-    ], true);
-    NagSuppressions.addResourceSuppressions(lb, [
-      {
-        id: 'AwsSolutions-EC23',
-        reason: 'For workshops we only publish LB port to the world'
-      },
-    ], true);
     NagSuppressions.addStackSuppressions(this, [
       {
+        id: 'CdkNagValidationFailure',
+        reason: 'False Positive: the security group blocks public access'
+      },
+      {
         id: 'AwsSolutions-VPC7',
-        reason: 'VPC Flow Log is not used for the workshop.'
+        reason: 'True Positive with compensating controls: VPC Flow Log is not used for the workshop.'
       },
       {
         id: 'AwsSolutions-IAM4',
-        reason: 'We use AWS managed policies for making a guardrail.'
+        reason: 'True Positive with compensating controls: We use AWS managed policies for making a guardrail.'
       },
       {
         id: 'AwsSolutions-IAM5',
-        reason: 'We use the wildcard for reading CFn outputs for the workshop.'
+        reason: 'True Positive with compensating controls: We use the wildcard for reading CFn outputs for the workshop.'
+      },
+      {
+        id: 'AwsSolutions-EC23',
+        reason: 'True Positive with compensating controls: For workshops we only publish LB port to the world'
       },
       {
         id: 'AwsSolutions-EC28',
-        reason: 'For workshops we do not have detailed monitoring enabled for cost reduction.'
+        reason: 'True Positive with compensating controls: For workshops we do not have detailed monitoring enabled for cost reduction.'
       },
       {
         id: 'AwsSolutions-EC29',
-        reason: 'For workshops we do not have a EC2 instance joined to ASG for simplifying intructions.'
+        reason: 'True Positive with compensating controls: For workshops we do not have a EC2 instance joined to ASG for simplifying intructions.'
       },
       {
         id: 'AwsSolutions-ELB2',
-        reason: 'For workshops we do not use ELB access log.'
+        reason: 'True Positive with compensating controls: For workshops we do not use ELB access log.'
       },
       {
         id: 'AwsSolutions-RDS6',
-        reason: 'For workshops we use username/password to demonstrate legacy env.'
+        reason: 'True Positive with compensating controls: For workshops we use username/password to demonstrate legacy env.'
       },
       {
         id: 'AwsSolutions-RDS10',
-        reason: 'For workshops we do not use deletion protection for simplifying intructions.'
+        reason: 'True Positive with compensating controls: For workshops we do not use deletion protection for simplifying intructions.'
       },
       {
         id: 'AwsSolutions-RDS11',
-        reason: 'For workshops we use default MySQL port to demonstrate legacy env.'
+        reason: 'True Positive with compensating controls: For workshops we use default MySQL port to demonstrate legacy env.'
       },
       {
         id: 'AwsSolutions-RDS14',
-        reason: 'For workshops we do not use backtraco to reduce cost.'
+        reason: 'True Positive with compensating controls: For workshops we do not use backtraco to reduce cost.'
       },
     ]);
   }

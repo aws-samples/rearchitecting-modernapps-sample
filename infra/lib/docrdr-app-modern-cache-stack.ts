@@ -31,10 +31,17 @@ export class DocrdrAppModernCacheStack extends Stack {
       value: `${cacheCluster.attrRedisEndpointPort}`,
     });
 
+    NagSuppressions.addResourceSuppressions(securityGroup, [
+      {
+        id: 'CdkNagValidationFailure',
+        reason: 'False Positive: the security group blocks public access'
+      },
+    ]);
+
     NagSuppressions.addResourceSuppressions(cacheCluster, [
       {
         id: 'AwsSolutions-AEC5',
-        reason: 'For workshops we use default cache port for being easy to understand.'
+        reason: 'True Positive with compensating controls: For workshops we use default cache port for being easy to understand.'
       },
     ]);
   }

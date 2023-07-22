@@ -31,7 +31,7 @@ export class DocrdrAppModernDbStack extends Stack {
     NagSuppressions.addResourceSuppressions(databaseConnection, [
       {
         id: 'AwsSolutions-SMG4',
-        reason: 'For workshops we do not use secrets rotation to simplify intructions.'
+        reason: 'True Positive with compensating controls: For workshops we do not use secrets rotation to simplify intructions.'
       },
     ]);
   }
