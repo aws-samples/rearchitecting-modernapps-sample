@@ -35,3 +35,6 @@ What should we do to modernize our app?
 
 See also [the workshop](https://catalog.us-east-1.prod.workshops.aws/workshops/a49e50ba-7473-4348-ba5d-6166385ad91d)
 
+## Notes
+
+The application has no authentication and publishes the loadbalancer port to the world. For production workload you need to consider the way to limit the scope.
