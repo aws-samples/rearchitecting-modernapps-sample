@@ -4,19 +4,18 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as rds from 'aws-cdk-lib/aws-rds';
 import { NagSuppressions } from 'cdk-nag'
 
 export class DocrdrAppStack extends Stack {
 
   public readonly vpc: ec2.IVpc;
 
-  public readonly databaseHostname: string;
-
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const vpc = new ec2.Vpc(this, 'Vpc');
+    const vpc = ec2.Vpc.fromLookup(this, "Vpc", {
+      vpcId: this.node.tryGetContext('vpcId'),
+    })
     this.vpc = vpc;
 
     const securityGroup = new ec2.SecurityGroup(this, "SecurityGroup", {
@@ -111,45 +110,14 @@ export class DocrdrAppStack extends Stack {
       );
     });
 
-    // DB
-    const databaseUsername = this.node.tryGetContext('databaseUsername')
-    const databasePassword = this.node.tryGetContext('databasePassword')
-
-    const cluster = new rds.DatabaseCluster(this, 'Database', {
-      engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_02_0 }),
-      credentials: rds.Credentials.fromPassword(databaseUsername, SecretValue.unsafePlainText(databasePassword)),
-      storageEncrypted: true,
-      writer: rds.ClusterInstance.provisioned('writer', {
-        instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM),
-      }),
-      vpc,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      },
-      parameters: {
-        character_set_client: 'utf8mb4',
-        character_set_connection: 'utf8mb4',
-        character_set_database: 'utf8mb4',
-        character_set_results: 'utf8mb4',
-        character_set_server: 'utf8mb4',
-        collation_connection: 'utf8mb4_bin',
-        collation_server: 'utf8mb4_bin',
-      },
-    });
-    cluster.connections.allowFrom(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(3306));
-    this.databaseHostname = cluster.clusterEndpoint.hostname;
-
-    new CfnOutput(this, 'ModernAppWorkshopGetSSHKeyCommand', {
+    new CfnOutput(this, 'GetSSHKeyCommand', {
       value: `aws ssm get-parameter --name /ec2/keypair/${cfnKeyPair.attrKeyPairId} --region ${this.region} --with-decryption --query Parameter.Value --output text`,
     });
-    new CfnOutput(this, 'ModernAppWorkshopSSHAccess', {
+    new CfnOutput(this, 'SSHAccess', {
       value: `ec2-user@${instance.instancePublicIp}`,
     });
-    new CfnOutput(this, 'ModernAppWorkshopApplicationURL', {
+    new CfnOutput(this, 'ApplicationURL', {
       value: `http://${lb.loadBalancerDnsName}/`,
-    });
-    new CfnOutput(this, 'ModernAppWorkshopDatabaseHost', {
-      value: `${this.databaseHostname}`,
     });
 
     // NAG
@@ -157,10 +125,6 @@ export class DocrdrAppStack extends Stack {
       {
         id: 'CdkNagValidationFailure',
         reason: 'False Positive: the security group blocks public access'
-      },
-      {
-        id: 'AwsSolutions-VPC7',
-        reason: 'True Positive with compensating controls: VPC Flow Log is not used for the workshop.'
       },
       {
         id: 'AwsSolutions-IAM4',

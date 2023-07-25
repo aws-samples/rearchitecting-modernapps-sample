@@ -8,25 +8,12 @@ repositories {
     mavenCentral()
 }
 
-dependencyLocking {
-    lockAllConfigurations()
-}
-
-configurations {
-    implementation.exclude group: 'org.springframework'
-    implementation.exclude group: 'org.springframework.boot'
-    grettyStarter.exclude group: 'org.springframework' 
-    grettyStarter.exclude group: 'org.springframework.boot' 
-    grettyRunnerJetty11.exclude group: 'org.eclipse.jetty' 
-}
-
 ext {
     gretty_runTask = true
     gretty_debugTask = true
 }
 
 dependencies {
-
     // This dependency is used by the application.
     compileOnly 'jakarta.servlet:jakarta.servlet-api:5.0.0'
     compileOnly 'jakarta.annotation:jakarta.annotation-api:2.1.0'

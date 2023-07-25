@@ -1,4 +1,4 @@
-# Sample Application for "Re-Architecting for Containerized Modern Application Workshop"
+# DOCRDR - Sample Application for "Re-Architecting for Containerized Modern Application Workshop"
 
 It's the sample application to demonstrate how to modernize legacy applications.
 
