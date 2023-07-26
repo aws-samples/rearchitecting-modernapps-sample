@@ -19,7 +19,7 @@ sudo curl -Lo /usr/local/bin/copilot https://github.com/aws/copilot-cli/releases
 
 # copilot-cli で使用する環境変数などのセットアップ
 echo "export AWS_DEFAULT_REGION=$(curl -s 169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)" >> ~/.bashrc
-echo "export DOCRDR_STACK_NAME=ModernAppsWS" >> ~/.bashrc
+echo "export DOCRDR_STACK_NAME=modernapps-ws" >> ~/.bashrc
 source ~/.bashrc
 
 mkdir -p ~/.aws
