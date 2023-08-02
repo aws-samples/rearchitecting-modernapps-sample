@@ -7,7 +7,7 @@ sudo ./aws/install
 
 # Install prerequisites 
 sudo yum install -y jq
-wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq && chmod +x /usr/local/bin/yq && yq version
+sudo curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq && yq version
 
 # Docker Compose プラグインのインストール
 wget https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
