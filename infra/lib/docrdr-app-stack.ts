@@ -4,19 +4,18 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as rds from 'aws-cdk-lib/aws-rds';
 import { NagSuppressions } from 'cdk-nag'
 
 export class DocrdrAppStack extends Stack {
 
   public readonly vpc: ec2.IVpc;
 
-  public readonly databaseHostname: string;
-
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const vpc = new ec2.Vpc(this, 'Vpc');
+    const vpc = ec2.Vpc.fromLookup(this, "Vpc", {
+      vpcId: this.node.tryGetContext('vpcId'),
+    })
     this.vpc = vpc;
 
     const securityGroup = new ec2.SecurityGroup(this, "SecurityGroup", {
@@ -72,6 +71,16 @@ export class DocrdrAppStack extends Stack {
       securityGroup,
       keyName,
       role,
+      blockDevices: [
+        {
+          deviceName: '/dev/xvda',
+          volume: ec2.BlockDeviceVolume.ebs(16, {
+            encrypted: true,
+            volumeType: ec2.EbsDeviceVolumeType.GP3,
+            deleteOnTermination: true,
+          }),
+        }
+      ], 
     });
 
     const lb = new elbv2.ApplicationLoadBalancer(this, 'LB', {
@@ -101,101 +110,61 @@ export class DocrdrAppStack extends Stack {
       );
     });
 
-    // DB
-    const databaseUsername = this.node.tryGetContext('databaseUsername')
-    const databasePassword = this.node.tryGetContext('databasePassword')
-
-    const cluster = new rds.DatabaseCluster(this, 'Database', {
-      engine: rds.DatabaseClusterEngine.auroraMysql({ version: rds.AuroraMysqlEngineVersion.VER_3_02_0 }),
-      credentials: rds.Credentials.fromPassword(databaseUsername, SecretValue.unsafePlainText(databasePassword)),
-      storageEncrypted: true,
-      instances: 1,
-      instanceProps: {
-        instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE3, ec2.InstanceSize.MEDIUM),
-        vpcSubnets: {
-          subnetType: ec2.SubnetType.PRIVATE_WITH_NAT,
-        },
-        vpc,
-      },
-      parameters: {
-        character_set_client: 'utf8mb4',
-        character_set_connection: 'utf8mb4',
-        character_set_database: 'utf8mb4',
-        character_set_results: 'utf8mb4',
-        character_set_server: 'utf8mb4',
-        collation_connection: 'utf8mb4_bin',
-        collation_server: 'utf8mb4_bin',
-      },
-    });
-    cluster.connections.allowFrom(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(3306));
-    this.databaseHostname = cluster.clusterEndpoint.hostname;
-
-    new CfnOutput(this, 'ModernAppWorkshopGetSSHKeyCommand', {
+    new CfnOutput(this, 'GetSSHKeyCommand', {
       value: `aws ssm get-parameter --name /ec2/keypair/${cfnKeyPair.attrKeyPairId} --region ${this.region} --with-decryption --query Parameter.Value --output text`,
     });
-    new CfnOutput(this, 'ModernAppWorkshopSSHAccess', {
+    new CfnOutput(this, 'SSHAccess', {
       value: `ec2-user@${instance.instancePublicIp}`,
     });
-    new CfnOutput(this, 'ModernAppWorkshopApplicationURL', {
+    new CfnOutput(this, 'ApplicationURL', {
       value: `http://${lb.loadBalancerDnsName}/`,
-    });
-    new CfnOutput(this, 'ModernAppWorkshopDatabaseHost', {
-      value: `${this.databaseHostname}`,
     });
 
     // NAG
-    NagSuppressions.addResourceSuppressions(securityGroup, [
-      {
-        id: 'AwsSolutions-EC23',
-        reason: 'For workshops we only publish LB port to the world'
-      },
-    ], true);
-    NagSuppressions.addResourceSuppressions(lb, [
-      {
-        id: 'AwsSolutions-EC23',
-        reason: 'For workshops we only publish LB port to the world'
-      },
-    ], true);
     NagSuppressions.addStackSuppressions(this, [
       {
-        id: 'AwsSolutions-VPC7',
-        reason: 'VPC Flow Log is not used for the workshop.'
+        id: 'CdkNagValidationFailure',
+        reason: 'False Positive: the security group blocks public access'
       },
       {
         id: 'AwsSolutions-IAM4',
-        reason: 'We use AWS managed policies for making a guardrail.'
+        reason: 'True Positive with compensating controls: We use AWS managed policies for making a guardrail.'
       },
       {
         id: 'AwsSolutions-IAM5',
-        reason: 'We use the wildcard for reading CFn outputs for the workshop.'
+        reason: 'True Positive with compensating controls: We use the wildcard for reading CFn outputs for the workshop.'
+      },
+      {
+        id: 'AwsSolutions-EC23',
+        reason: 'True Positive with compensating controls: For workshops we only publish LB port to the world'
       },
       {
         id: 'AwsSolutions-EC28',
-        reason: 'For workshops we do not have detailed monitoring enabled for cost reduction.'
+        reason: 'True Positive with compensating controls: For workshops we do not have detailed monitoring enabled for cost reduction.'
       },
       {
         id: 'AwsSolutions-EC29',
-        reason: 'For workshops we do not have a EC2 instance joined to ASG for simplifying intructions.'
+        reason: 'True Positive with compensating controls: For workshops we do not have a EC2 instance joined to ASG for simplifying intructions.'
       },
       {
         id: 'AwsSolutions-ELB2',
-        reason: 'For workshops we do not use ELB access log.'
+        reason: 'True Positive with compensating controls: For workshops we do not use ELB access log.'
       },
       {
         id: 'AwsSolutions-RDS6',
-        reason: 'For workshops we use username/password to demonstrate legacy env.'
+        reason: 'True Positive with compensating controls: For workshops we use username/password to demonstrate legacy env.'
       },
       {
         id: 'AwsSolutions-RDS10',
-        reason: 'For workshops we do not use deletion protection for simplifying intructions.'
+        reason: 'True Positive with compensating controls: For workshops we do not use deletion protection for simplifying intructions.'
       },
       {
         id: 'AwsSolutions-RDS11',
-        reason: 'For workshops we use default MySQL port to demonstrate legacy env.'
+        reason: 'True Positive with compensating controls: For workshops we use default MySQL port to demonstrate legacy env.'
       },
       {
         id: 'AwsSolutions-RDS14',
-        reason: 'For workshops we do not use backtraco to reduce cost.'
+        reason: 'True Positive with compensating controls: For workshops we do not use backtraco to reduce cost.'
       },
     ]);
   }
